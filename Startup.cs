@@ -63,6 +63,7 @@ namespace SaladBot
             services.AddSingleton<Random>();
             services.AddSingleton<CommandHandler>();
             services.AddSingleton<DatabaseService>();
+            services.AddSingleton<EconomyService>();
             services.AddSingleton<IConfigurationRoot>(Configuration);
         }
     }

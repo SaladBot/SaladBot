@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SaladBot.Services
@@ -14,12 +15,14 @@ namespace SaladBot.Services
         private readonly DiscordSocketClient _discord;
         private readonly CommandService _commands;
         private readonly IConfigurationRoot _config;
+        private readonly EconomyService _economy;
 
-        public StartupService(DiscordSocketClient discord, CommandService commands, IConfigurationRoot config)
+        public StartupService(DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, EconomyService economy)
         {
             _discord = discord;
             _commands = commands;
             _config = config;
+            _economy = economy;
         }
 
         public async Task StartAsync()
@@ -33,6 +36,13 @@ namespace SaladBot.Services
             await _discord.LoginAsync(Discord.TokenType.Bot, discordToken);
             await _discord.StartAsync();
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            _discord.UserJoined += UserJoined;
+        }
+
+        private async Task UserJoined(SocketGuildUser user)
+        {
+            Console.WriteLine($"New user joined {user.Username}");
+            await _economy.AddUser(user);
         }
     }
 }

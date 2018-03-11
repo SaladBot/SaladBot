@@ -21,22 +21,20 @@ namespace SaladBot.Services
             _logger = logger;
         }
 
-        public async Task<MySqlConnection> OpenConn(CancellationToken ct)
+        public async Task<MySqlConnection> OpenConn()
         {
-            ct.ThrowIfCancellationRequested();
-
             var conn = new MySqlConnection(_connectionString);
-            await conn.OpenAsync(ct);
+            await conn.OpenAsync();
             return conn;
         }
 
-        public async Task<TResult> WithConnAsync<TResult>(Func<MySqlConnection, CancellationToken,  Task<TResult>> fn, CancellationToken ct)
+        public async Task<TResult> WithConnAsync<TResult>(Func<MySqlConnection,  Task<TResult>> fn)
         {
             try
             {
-                using (var conn = await OpenConn(ct))
+                using (var conn = await OpenConn())
                 {
-                    return await fn(conn, ct);
+                    return await fn(conn);
                 }
             }
             catch(MySqlException e)
@@ -44,6 +42,23 @@ namespace SaladBot.Services
                 await _logger.LogAsync(new LogMessage(LogSeverity.Error, nameof(DatabaseService), e.Message));
             }
 
+            throw new Exception();
+        }
+
+        public async Task WithConnAsync(Func<MySqlConnection, Task> fn)
+        {
+            try
+            {
+                using (var conn = await OpenConn())
+                {
+                    await fn(conn);
+                    return;
+                }
+            }
+            catch(MySqlException e)
+            {
+                await _logger.LogAsync(new LogMessage(LogSeverity.Error, nameof(DatabaseService), e.Message));
+            }
             throw new Exception();
         }
     }
